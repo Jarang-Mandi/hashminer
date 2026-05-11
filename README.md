@@ -1,7 +1,8 @@
 Hash256 GPU miner
 ==================
 
-Rust/OpenCL miner for Hash256-style Keccak mining. It can mine from explicit
+Rust/OpenCL miner for Hash256-style Keccak mining. Current site:
+`https://hash256.fun/`. It can mine from explicit
 challenge/target hex, from a simple HTTP JSON endpoint, or directly from the
 Hash256 Ethereum contract state.
 
@@ -33,9 +34,9 @@ Mine Hash256 on-chain state
 
 ```powershell
 .\target\release\hashminer.exe `
-  --rpc-url https://eth.llamarpc.com `
-  --wallet-address 0x2e18156f6229a479Ed39C7C127dB9d993c7FA34E `
-  --duty 70 `
+  --rpc-url "https://eth.llamarpc.com,https://ethereum-rpc.publicnode.com" `
+  --wallet-address your0xwalletaddress `
+  --gpu-limit 50 `
   --batch-power 23
 ```
 
@@ -43,10 +44,24 @@ Mine Hash256 on-chain state
 runtime and sleeps between batches so the GPU is busy for roughly that
 percentage of wall-clock time.
 
+Test RPC reading without starting mining:
+
+```powershell
+.\target\release\hashminer.exe `
+  --rpc-url "https://eth.llamarpc.com,https://ethereum-rpc.publicnode.com" `
+  --wallet-address 0our0xwalletaddress `
+  --print-work
+```
+
+Etherscan is not required for challenge/difficulty. Ethereum JSON-RPC is enough
+because the miner reads `getChallenge(address)` and `miningState()` directly
+from the contract. If one public RPC fails, pass a comma-separated fallback list
+or use your own paid/custom RPC.
+
 Manual challenge mode
 
 ```powershell
-.\target\release\hashminer.exe <challenge_hex> <difficulty_hex> --duty 50
+.\target\release\hashminer.exe <challenge_hex> <difficulty_hex> --duty 50 --batch-power 23
 ```
 
 HTTP work endpoint mode
@@ -55,7 +70,6 @@ HTTP work endpoint mode
 .\target\release\hashminer.exe `
   --fetch-url https://example.com/work `
   --submit-url https://example.com/submit `
-  --keep-mining `
   --duty 50
 ```
 
@@ -72,8 +86,8 @@ The submit endpoint receives:
 ```
 
 Useful options
-- `--batch-size 1048576` changes the amount of work per OpenCL launch.
-- `--nonce-start <u64>` sets a deterministic starting nonce.
+- `--batch-power 23` changes the amount of work per OpenCL launch to `2^23`.
+- `--nonce-start <u64>` sets a deterministic starting nonce. If omitted, the
+  miner picks a time-derived start so repeated runs do not all scan from zero.
 - `--contract <address>` overrides the default Hash256 contract address:
   `0xAC7b5d06fa1e77D08aea40d46cB7C5923A87A0cc`.
-
